@@ -2,4 +2,9 @@
 - hosts: all
 
   tasks:
-    apt-get install -y openjdk-8-jdk
+
+  roles:
+    - role: gantsign.java
+      java_version: jdk8u172-b11
+      # You need to specify java_vendor to use AdoptOpenJDK with Java < 11
+      java_vendor: adoptopenjdk
