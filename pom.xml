@@ -11,6 +11,9 @@
     <modules>
         <module>BatchProcessingService</module>
         <module>DeployService</module>
+        <module>KafkaClient</module>
+        <module>FlumeKafkaToHdfsInterceptor</module>
+        <module>KafkaClientCloudera</module>
     </modules>
 
 

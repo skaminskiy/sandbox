@@ -1,105 +1,110 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
+$master_script = <<SCRIPT
+#!/bin/bash
 
-# All Vagrant configuration is done below. The "2" in Vagrant.configure
-# configures the configuration version (we support older styles for
-# backwards compatibility). Please don't change it unless you know what
-# you're doing.
-# Vagrant.configure("2") do |config|
-  # The most common configuration options are documented and commented below.
-  # For a complete reference, please see the online documentation at
-  # https://docs.vagrantup.com.
+# for root -> wget http://archive.cloudera.com/cm5/installer/5.15.0/cloudera-manager-installer.bin
+# for root -> chmod u+x cloudera-manager-installer.bin
+# restart
 
-  # Every Vagrant development environment requires a box. You can search for
-  # boxes at https://vagrantcloud.com/search.
-  # config.vm.box = "base"
-  # config.vm.box = "ubuntu/bionic64"
+# sudo service cloudera-scm-server start
+# sudo service cloudera-scm-server stop
+# sudo service cloudera-scm-server restart
 
-  # Disable automatic box update checking. If you disable this, then
-  # boxes will only be checked for updates when the user runs
-  # `vagrant box outdated`. This is not recommended.
-  # config.vm.box_check_update = false
+# ssh-keygen -t rsa
+# ssh-copy-id root@sandbox-cloudera-cluster-node2
 
-  # Create a forwarded port mapping which allows access to a specific port
-  # within the machine from a port on the host machine. In the example below,
-  # accessing "localhost:8080" will access port 80 on the guest machine.
-  # NOTE: This will enable public access to the opened port
-  # config.vm.network "forwarded_port", guest: 80, host: 8080
+# cd ~
+# wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" "https://download.oracle.com/otn-pub/java/jdk/8u191-b12/2787e4a523244c269598db4e85c51e0c/jdk-8u191-linux-x64.rpm"
+# sudo yum localinstall jdk-8u161-linux-x64.rpm
 
-  # Create a forwarded port mapping which allows access to a specific port
-  # within the machine from a port on the host machine and only allow access
-  # via 127.0.0.1 to disable public access
-  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
 
-  # Create a private network, which allows host-only access to the machine
-  # using a specific IP.
-  # config.vm.network "private_network", ip: "192.168.33.10"
+SCRIPT
 
-  # Create a public network, which generally matched to bridged network.
-  # Bridged networks make the machine appear as another physical device on
-  # your network.
-  # config.vm.network "public_network"
+$hosts_script = <<SCRIPT
 
-  # Share an additional folder to the guest VM. The first argument is
-  # the path on the host to the actual folder. The second argument is
-  # the path on the guest to mount the folder. And the optional third
-  # argument is a set of non-required options.
-  # config.vm.synced_folder "/home/sergii/Vagrant_data/Shared", "/vagrant_data"
+echo "****************************"
+echo "Starting Prepare Host"
+echo "****************************"
 
-  # Provider-specific configuration so you can fine-tune various
-  # backing providers for Vagrant. These expose provider-specific options.
-  # Example for VirtualBox:
-  #
-  # config.vm.provider "virtualbox" do |vb|
-  #   # Display the VirtualBox GUI when booting the machine
-  #   vb.gui = true
-  #
-  #   # Customize the amount of memory on the VM:
-  #   vb.memory = "1024"
-  # end
-  #
-  # View the documentation for the provider you are using for more
-  # information on available options.
+useradd  -mG wheel hadoop
+echo 123 | passwd hadoop --stdin
+sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd_config
 
-  # Enable provisioning with a shell script. Additional provisioners such as
-  # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
-  # documentation for more information about their specific syntax and use.
-  # apt-get update
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   apt-get install -y openjdk-8-jdk
-  # SHELL
-# end
+sed -i "s/%wheel\tALL=(ALL)\tALL/# %wheel\tALL=(ALL)\tALL/g" /etc/sudoers
+sed -i "s/# %wheel\tALL=(ALL)\tNOPASSWD: ALL/%wheel\tALL=(ALL)\tNOPASSWD: ALL/g" /etc/sudoers
+
+service sshd restart
+
+# sudo apt-get update -y && apt-get upgrade -y
+# sudo apt install ssh rsync -y
+
+# set umask
+echo -e "\nSetting Umask to 022 in .bashrc"
+umask 022
+echo "umask 022" >> ~/.bashrc
+
+# disable SELinux
+echo -e "\nDisabling SELinux"
+sed -i "s/SELINUX=permissive/SELINUX=disabled/g" /etc/selinux/config
+
+echo -e "\n****************************"
+echo "Prepare Nodes COMPLETE!"
+echo "****************************"
+
+SCRIPT
 
 Vagrant.configure("2") do |config|
-    config.ssh.insert_key = false
-    config.vm.provider :virtualbox do |vb|
-        vb.customize ["modifyvm", :id, "--memory", "256"]
+    # config.ssh.insert_key = false
+
+    # Define base image
+    config.vm.box = "geerlingguy/centos7"
+
+    # Manage /etc/hosts on host and VMs
+    config.hostmanager.enabled = false
+    config.hostmanager.manage_host = true
+    config.hostmanager.include_offline = true
+    config.hostmanager.ignore_private_ip = false
+
+    config.vm.define :clouderaClusterNode1 do |node|
+      node.vm.provider :virtualbox do |v|
+        v.name = "sandbox-cloudera-cluster-node1"
+        v.customize ["modifyvm", :id, "--memory", "3048"]
+      end
+      node.vm.network :private_network, ip: "10.211.55.100"
+      node.vm.hostname = "sandbox-cloudera-cluster-node1"
+      node.vm.provision :shell, :inline => $hosts_script
+      node.vm.provision :hostmanager
+      node.vm.provision :shell, :inline => $master_script
+    end
+
+    config.vm.define :clouderaClusterNode2 do |node|
+      node.vm.provider :virtualbox do |v|
+        v.name = "sandbox-cloudera-cluster-node2"
+        v.customize ["modifyvm", :id, "--memory", "1024"]
+      end
+      node.vm.network :private_network, ip: "10.211.55.101"
+      node.vm.hostname = "sandbox-cloudera-cluster-node2"
+      node.vm.provision :shell, :inline => $hosts_script
+      node.vm.provision :hostmanager
     end
 
     # Kafka producer.
     config.vm.define "kafkaProducer" do |app|
         app.vm.hostname = "sandbox-kafka-producer.dev"
-        # app.vm.box = "ubuntu/bionic64"
-        app.vm.box = "geerlingguy/centos7"
         app.vm.network :private_network, ip: "192.168.60.4"
         config.vm.synced_folder "/home/sergii/Vagrant_data/Shared", "/vagrant_data"
     end
+
+
     # Kafka server.
-    config.vm.define "kafkaServer" do |app|
-        app.vm.hostname = "sandbox-kafka-server.dev"
-        app.vm.box = "geerlingguy/centos7"
-        app.vm.network :private_network, ip: "192.168.60.5"
-    end
-    # Database server.
-    # config.vm.define "db" do |db|
-    #    db.vm.hostname = "orc-db.dev"
-    #    db.vm.box = "ubuntu/bionic64"
-    #    db.vm.network :private_network, ip: "192.168.60.6"
+    # config.vm.define "kafkaServer" do |app|
+    #    app.vm.hostname = "sandbox-kafka-server.dev"
+    #    app.vm.box = "geerlingguy/centos7"
+    #    app.vm.network :private_network, ip: "192.168.60.5"
     # end
 
-    config.vm.provision "ansible" do |ansible|
-        ansible.playbook = "../Ansible/playbook.yml"
-        # Run commands as root.
-        ansible.sudo = true
-    end
+    # config.vm.provision "ansible" do |ansible|
+    #    ansible.playbook = "../Ansible/playbook.yml"
+    #    # Run commands as root.
+    #    ansible.sudo = true
+    # end
 end
