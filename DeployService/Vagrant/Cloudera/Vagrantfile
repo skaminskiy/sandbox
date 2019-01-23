@@ -2,6 +2,7 @@ $master_script = <<SCRIPT
 #!/bin/bash
 
 # for root -> wget http://archive.cloudera.com/cm5/installer/5.15.0/cloudera-manager-installer.bin
+# wget https://archive.cloudera.com/cm6/6.1.0/cloudera-manager-installer.bin
 # for root -> chmod u+x cloudera-manager-installer.bin
 # restart
 
@@ -67,7 +68,7 @@ Vagrant.configure("2") do |config|
     config.vm.define :clouderaClusterNode1 do |node|
       node.vm.provider :virtualbox do |v|
         v.name = "sandbox-cloudera-cluster-node1"
-        v.customize ["modifyvm", :id, "--memory", "3048"]
+        v.customize ["modifyvm", :id, "--memory", "5096"]
       end
       node.vm.network :private_network, ip: "10.211.55.100"
       node.vm.hostname = "sandbox-cloudera-cluster-node1"
@@ -83,6 +84,28 @@ Vagrant.configure("2") do |config|
       end
       node.vm.network :private_network, ip: "10.211.55.101"
       node.vm.hostname = "sandbox-cloudera-cluster-node2"
+      node.vm.provision :shell, :inline => $hosts_script
+      node.vm.provision :hostmanager
+    end
+
+    config.vm.define :clouderaClusterNode3 do |node|
+      node.vm.provider :virtualbox do |v|
+        v.name = "sandbox-cloudera-cluster-node3"
+        v.customize ["modifyvm", :id, "--memory", "1024"]
+      end
+      node.vm.network :private_network, ip: "10.211.55.102"
+      node.vm.hostname = "sandbox-cloudera-cluster-node3"
+      node.vm.provision :shell, :inline => $hosts_script
+      node.vm.provision :hostmanager
+    end
+
+    config.vm.define :clouderaClusterNode4 do |node|
+      node.vm.provider :virtualbox do |v|
+        v.name = "sandbox-cloudera-cluster-node4"
+        v.customize ["modifyvm", :id, "--memory", "1024"]
+      end
+      node.vm.network :private_network, ip: "10.211.55.103"
+      node.vm.hostname = "sandbox-cloudera-cluster-node4"
       node.vm.provision :shell, :inline => $hosts_script
       node.vm.provision :hostmanager
     end
