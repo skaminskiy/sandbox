@@ -11,30 +11,22 @@
 
     <artifactId>BatchProcessingService</artifactId>
 
+    <properties>
+        <application.mainclass>Main</application.mainclass>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
-                <groupId>io.fabric8</groupId>
-                <artifactId>docker-maven-plugin</artifactId>
-                <version>0.20.1</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
-                    <!--<dockerHost>http://127.0.0.1:2375</dockerHost>-->
-                    <dockerHost>http://172.17.0.1</dockerHost>
-                    <verbose>true</verbose>
-                    <images>
-                        <image>
-                            <name>batch-processing-service:${project.version}</name>
-                            <alias>batch-processing-service</alias>
-                            <build>
-                                <from>openjdk:8-jre</from>
-                                <assembly>
-                                    <descriptorRef>artifact</descriptorRef>
-                                </assembly>
-                                <cmd>java -jar
-                                    maven/${project.name}-${project.version}.jar</cmd>
-                            </build>
-                        </image>
-                    </images>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>${application.mainclass}</mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
             </plugin>
         </plugins>
