@@ -1,0 +1,14 @@
+
+
+Vagrant.configure("2") do |config|
+
+    # Define base image
+    config.vm.box = "ubuntu/xenial64"
+
+    # Airflow node.
+    config.vm.define "airflow" do |node|
+        node.vm.hostname = "airflow.dev"
+        node.vm.network :private_network, ip: "192.168.60.4"
+        config.vm.synced_folder "/home/sergii/Vagrant_data/Shared", "/vagrant_data"
+    end
+end

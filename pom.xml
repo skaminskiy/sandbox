@@ -16,5 +16,26 @@
         <module>KafkaClientCloudera</module>
     </modules>
 
+    <properties>
+        <docker-maven-plugin.version>0.28.0</docker-maven-plugin.version>
+        <maven-jar-plugin.version>3.1.1</maven-jar-plugin.version>
+    </properties>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>docker-maven-plugin</artifactId>
+                    <version>${docker-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven-jar-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
 </project>
