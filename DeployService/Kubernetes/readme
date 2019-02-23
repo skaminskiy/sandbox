@@ -1,0 +1,6 @@
+kubectl get nodes
+kubectl get pods
+kubectl create -f BatchProcessingService.yaml
+kubectl delete -f BatchProcessingService.yaml
+
+kubectl logs --selector app=batch-processing-service

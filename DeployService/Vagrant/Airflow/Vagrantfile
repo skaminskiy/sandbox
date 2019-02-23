@@ -9,6 +9,6 @@ Vagrant.configure("2") do |config|
     config.vm.define "airflow" do |node|
         node.vm.hostname = "airflow.dev"
         node.vm.network :private_network, ip: "192.168.60.4"
-        config.vm.synced_folder "/home/sergii/Vagrant_data/Shared", "/vagrant_data"
+        config.vm.synced_folder "/home/sergii/Projects/sandbox/DeployService/Vagrant/Airflow/dags", "/home/vagrant/airflow/my_dags"
     end
 end
